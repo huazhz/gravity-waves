@@ -22,22 +22,30 @@ for key in f.keys():
 
 	#format and truncate the wave
 	data = np.array(f[key]) 
-	data = np.reshape(data, (15000, )) 
+	data = np.reshape(data, (1, -1)) 
 	data = np.squeeze(data) 
-	dset.append(data) 
+	dset.append(data[0:15000]) 
 
 	#extract each BBH parameter from the key name
 	q.append(float(key[2:6]))
 	s1z.append(float(key[11:15]))
 	s2z.append(float(key[-8:-4]))
 
+dset = np.array(dset)
+print(dset.shape)
 
 q = np.array(q)
 s1z = np.array(s1z)
 s2z = np.array(s2z)
 
+q = np.reshape(q, (1, -1))
+s1z = np.reshape(s1z, (1, -1))
+s2z = np.reshape(s2z, (1, -1))
+
 labels = np.concatenate((q, s1z, s2z), axis=0)
 print(labels)
+print(labels.shape)
+print(labels[:,1])
 
 
 
