@@ -22,7 +22,7 @@ for key in f.keys():
 
 	#format and truncate the wave
 	data = np.array(f[key]) 
-	data = np.reshape(data, (1, 15000)) 
+	data = np.reshape(data, (15000, )) 
 	data = np.squeeze(data) 
 	dset.append(data) 
 
