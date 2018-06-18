@@ -33,6 +33,7 @@ for key in f.keys():
 
 dset = np.array(dset)
 print(dset.shape)
+print(dset)
 
 q = np.array(q)
 s1z = np.array(s1z)
