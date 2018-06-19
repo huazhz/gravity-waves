@@ -9,7 +9,7 @@ import h5py as h5
 import os
 
 
-filename = 'data.h5'
+filename = 'test.h5'
 f = h5.File(filename)
 
 
