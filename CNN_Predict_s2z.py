@@ -39,13 +39,17 @@ def generate_data(filename):
 
 	#combine all three parameter vectors (each column is q, s1z, s2z)
 	labels = np.concatenate((q, s1z, s2z), axis=0)
+	labels = np.transpose(labels)
 	#print(labels[:,1])
 
 	return dset, labels
 
-dset, labels = generate_data(train.h5)
+dset, labels = generate_data('train.h5')
 print(dset.shape)
+print(dset)
+print('\n')
 print(labels.shape)
+print(labels)
 
 ######## HELPER FUNCTIONS ########
 # def weight(name, shape):
