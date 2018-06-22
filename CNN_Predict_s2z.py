@@ -113,34 +113,37 @@ def model(x):
 
 ######## TRAIN MODEL ########
 def train(x):
-	epochs = 1000
-	epsilon = .01
+	epochs = 150
+	epsilon = .001
 	prediction = model(x)
-	cost = tf.reduce_mean(tf.losses.mean_squared_error(prediction, y))
+	cost = (tf.losses.mean_squared_error(prediction, y))
 	optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
-		sample, label = process_data('train.h5')
+		sample, label = process_data('train50.h5')
+		print(sample.shape, label.shape)
 		test_samples, test_labels = process_data('test.h5')
+
 
 		graph_cost = []
 		graph_epoch = []
 
-
 		for epoch in range(epochs):
 			_, c = sess.run([optimizer, cost], feed_dict = {x: sample, y: label})
-			
 			if epoch % 10 == 0:
 				graph_epoch.append(epoch)
 				graph_cost.append(c)
-				print(str(epoch) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+				print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
 
+		print(w_fc2.eval())
 		print("Optimization complete...\n")
+		print(prediction.eval({x: sample}))
+		print(label)
 
 		correct = (tf.abs(tf.subtract(prediction, y)) < epsilon) #see if the difference is less than the threshold
-		correct = tf.cast(correct, tf.float32) 			         #convert boolean tensor to float32
+		correct = tf.cast(correct, tf.float32)         #convert boolean tensor to float32
 		accuracy = tf.reduce_mean(correct, axis=None)
 
 		print('Training set accuracy: ', (accuracy.eval({x: sample, y: label})))
