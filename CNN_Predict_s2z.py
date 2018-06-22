@@ -54,7 +54,7 @@ def weight(name, shape):
 	return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
 
 def bias(name, shape):
-	return tf.Variable(tf.random_normal([shape]), name=name)
+	return tf.Variable(tf.random_normal(shape), name=name)
 
 def conv(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
@@ -105,7 +105,7 @@ def model(x):
 
 	#Output
 	w_fc2 = weight('w_f2', [1024, 3])
-	b_fc1 = bias('b_fc2', [3])
+	b_fc2 = bias('b_fc2', [3])
 	out = tf.matmul(fc, w_fc2) + b_fc2
 
 	return out
@@ -113,10 +113,10 @@ def model(x):
 
 ######## TRAIN MODEL ########
 def train(x):
-	epochs = 100
-	epsilon = .025
+	epochs = 1000
+	epsilon = .01
 	prediction = model(x)
-	cost = tf.reduce_mean(tf.losses.huber_loss(prediction, y, delta=epsilon))
+	cost = tf.reduce_mean(tf.losses.mean_squared_error(prediction, y))
 	optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 	with tf.Session() as sess:
@@ -134,7 +134,7 @@ def train(x):
 			if epoch % 10 == 0:
 				graph_epoch.append(epoch)
 				graph_cost.append(c)
-				print(str(epoch) + " out of " + str(epochs) + " completed.")
+				print(str(epoch) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
 
 		print("Optimization complete...\n")
@@ -147,6 +147,7 @@ def train(x):
 		print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels})))
 
 
+train(x)
 
 
 
