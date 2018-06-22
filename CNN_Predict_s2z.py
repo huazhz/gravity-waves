@@ -1,13 +1,11 @@
-from scipy import interpolate
 import numpy as np
 import random
 import h5py as h5
-import os
-#import tensorflow as tf
+import tensorflow as tf
 
 
 ######## DATA PREPROCESSING ########
-def generate_data(filename):
+def process_data(filename):
 	f = h5.File(filename)
 	dset = []
 	q = []
@@ -44,82 +42,115 @@ def generate_data(filename):
 
 	return dset, labels
 
-dset, labels = generate_data('train.h5')
-print(dset.shape)
-print(dset)
-print('\n')
-print(labels.shape)
-print(labels)
+# dset, labels = generate_data('train.h5')
+# print(dset.shape)
+# print(dset)
+# print('\n')
+# print(labels.shape)
+# print(labels)
 
 ######## HELPER FUNCTIONS ########
-# def weight(name, shape):
-# 	return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
+def weight(name, shape):
+	return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
 
-# def bias(name, shape):
-# 	return tf.Variable(tf.random_normal([shape]), name=name)
+def bias(name, shape):
+	return tf.Variable(tf.random_normal([shape]), name=name)
 
-# def conv(x, W):
-#     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
+def conv(x, W):
+    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
 
-# def maxPool(x):
-#     return tf.nn.max_pool(x, ksize=[1, 5, 1, 1], strides=[1, 5, 1, 1], padding = 'SAME')
+def maxPool(x):
+    return tf.nn.max_pool(x, ksize=[1, 5, 1, 1], strides=[1, 5, 1, 1], padding = 'SAME')
 
 
 ######## CNN MODEL ########
-# with tf.name_scope('Input'):
-# 	X = tf.placeholder(tf.float32, shape = [None, 15000])
+x = tf.placeholder(tf.float32, shape = [None, 15000])
+y = tf.placeholder(tf.float32, shape = [None, 3])
 
-# with tf.name_scope('Labels'):
-# 	Y = tf.placeholder(tf.float32, shape = [None, 3])
+def model(x):
+	#Reshape input
+	inp = tf.reshape(x, [-1, 15000, 1, 1])
 
-# with tf.name_scope('Reshape_input'):
-# 	inp = tf.reshape(X, [-1, 15000, 1, 1])
+	#Convolutional layer 
+	w_conv1 = weight('w_conv1', [16, 1, 1, 64])
+	b_conv1 = bias('b_conv1', [64])
+	conv1 = tf.nn.relu(conv(inp, w_conv1) + b_conv1)
 
-# with tf.name_scope('Conv1'):
-# 	w_conv1 = weight('w_conv1', [16, 1, 1, 64])
-# 	b_conv1 = bias('b_conv1', [64])
-# 	conv1 = conv(inp, w_conv1) + b_conv1
-# 	conv1 = tf.nn.relu(conv1)
+	#Max pool 1
+	conv1 = maxPool(conv1)
 
-# with tf.name_scope('MaxPool1'):
-# 	conv1 = maxPool(conv1)
+	#Convolutional layer 2
+	w_conv2 = weight('w_conv2', [16, 1, 64, 128])
+	b_conv2 = bias('b_conv2', [128])
+	conv2 = tf.nn.relu(conv(conv1, w_conv2) + b_conv2)
 
-# with tf.name_scope('Conv2'):
-# 	w_conv2 = weight('w_conv2', [16, 1, 64, 128])
-# 	b_conv2 = bias('b_conv2', [128])
-# 	conv2 = conv(conv1, w_conv2) + b_conv2
-# 	conv2 = tf.nn.relu(conv2)
+	#Max pool 2
+	conv2 = maxPool(conv2)
 
-# with tf.name_scope('MaxPool2'):
-# 	conv2 = maxPool(conv2)
+	#Convolutional layer 3
+	w_conv3 = weight('w_conv3', [16, 1, 128, 256])
+	b_conv3 = bias('b_conv3', [256])
+	conv3 = tf.nn.relu(conv(conv2, w_conv3) + b_conv3)
 
-# with tf.name_scope('Conv3'):
-# 	w_conv3 = weight('w_conv3', [16, 1, 128, 256])
-# 	b_conv3 = bias('b_conv3', [256])
-# 	conv3 = conv(conv2, w_conv3) + b_conv3
-# 	conv3 = tf.nn.relu(conv3)
+	#Max pool 3
+	conv3 = maxPool(conv3)
 
-# with tf.name_scope('MaxPool3'):
-# 	conv3 = maxPool(conv3)
+	#Flatten
+	flat = tf.reshape(conv3, [-1, 120 * 256])
 
-# with tf.name_scope('Flatten_layer'):
-# 	flat = tf.reshape(conv3, [-1, 120 * 256])
+	#Fully connected layer
+	w_fc1 = weight('w_fc1', [120 * 256, 1024])
+	b_fc1 = bias('b_fc1', [1024])
+	fc = tf.nn.relu(tf.matmul(flat, w_fc1) + b_fc1)
 
-# with tf.name_scope('FC_layer'):
-# 	w_fc1 = weight('w_fc1', [120 * 256, 1024])
-# 	b_fc1 = bias('b_fc1', [1024])
-# 	fc = tf.matmul(flat, w_fc1) + b_fc1
-# 	fc = tf.nn.relu(fc)
+	#Output
+	w_fc2 = weight('w_f2', [1024, 3])
+	b_fc1 = bias('b_fc2', [3])
+	out = tf.matmul(fc, w_fc2) + b_fc2
 
-# with tf.name_scope('Output'):
-# 	w_fc2 = weight('w_f2', [1024, 3])
-# 	b_fc1 = bias('b_fc2', [3])
-# 	Y_ = tf.matmul(fc, w_fc2) + b_fc2
+	return out
 
 
-# #Loss function
-# cost = tf.losses.mean_squared_error(Y_, Y)
-# optimizer = tf.train.AdamOptimizer().minimize(cost)
+######## TRAIN MODEL ########
+def train(x):
+	epochs = 100
+	epsilon = .025
+	prediction = model(x)
+	cost = tf.reduce_mean(tf.losses.huber_loss(prediction, y, delta=epsilon))
+	optimizer = tf.train.AdamOptimizer().minimize(cost)
+
+	with tf.Session() as sess:
+		sess.run(tf.global_variables_initializer())
+		sample, label = process_data('train.h5')
+		test_samples, test_labels = process_data('test.h5')
+
+		graph_cost = []
+		graph_epoch = []
+
+
+		for epoch in range(epochs):
+			_, c = sess.run([optimizer, cost], feed_dict = {x: sample, y: label})
+			
+			if epoch % 10 == 0:
+				graph_epoch.append(epoch)
+				graph_cost.append(c)
+				print(str(epoch) + " out of " + str(epochs) + " completed.")
+
+
+		print("Optimization complete...\n")
+
+		correct = (tf.abs(tf.subtract(prediction, y)) < epsilon) #see if the difference is less than the threshold
+		correct = tf.cast(correct, tf.float32) 			         #convert boolean tensor to float32
+		accuracy = tf.reduce_mean(correct, axis=None)
+
+		print('Training set accuracy: ', (accuracy.eval({x: sample, y: label})))
+		print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels})))
+
+
+
+
+
+
 
 
 
