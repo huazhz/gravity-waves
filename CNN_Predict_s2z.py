@@ -42,13 +42,6 @@ def process_data(filename):
 
 	return dset, labels
 
-# dset, labels = generate_data('train.h5')
-# print(dset.shape)
-# print(dset)
-# print('\n')
-# print(labels.shape)
-# print(labels)
-
 ######## HELPER FUNCTIONS ########
 def weight(name, shape):
 	return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
@@ -108,24 +101,21 @@ def model(x):
 	b_fc2 = bias('b_fc2', [3])
 	prediction = tf.matmul(fc, w_fc2) + b_fc2
 
-	#return out
 
 
-######## TRAIN MODEL ########
-#def train(x):
 	epochs = 150
 	epsilon = .001
-	#prediction = model(x)
 	cost = (tf.losses.mean_squared_error(prediction, y))
 	optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 	with tf.Session() as sess:
+		print("Starting TensorFlow session...")
 		sess.run(tf.global_variables_initializer())
 		sample, label = process_data('train50.h5')
 		print(sample.shape, label.shape)
 		test_samples, test_labels = process_data('test.h5')
 
-
+              	print("Processed data!") 
 		graph_cost = []
 		graph_epoch = []
 
