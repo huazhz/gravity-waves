@@ -1,8 +1,11 @@
+
 import numpy as np
+import os
 import random
 import h5py as h5
 import tensorflow as tf
 
+#export CUDA_VISIBLE_DEVICES=1
 
 ######## DATA PREPROCESSING ########
 def process_data(filename):
@@ -14,10 +17,10 @@ def process_data(filename):
 
 	for key in f.keys():
 		#format and truncate the wave
-		data = np.array(f[key]) 
-		data = np.reshape(data, (1, -1)) 
-		data = np.squeeze(data) 
-		dset.append(data[0:15000]) 
+		data = np.array(f[key])
+		data = np.reshape(data, (1, -1))
+		data = np.squeeze(data)
+		dset.append(data[0:15000])
 
 		#extract each BBH parameter from the key name
 		q.append(float(key[2:6]))
@@ -105,16 +108,18 @@ def model(x):
 	epochs = 150
 	epsilon = .001
 	cost = (tf.losses.mean_squared_error(prediction, y))
-	optimizer = tf.train.AdamOptimizer().minimize(cost)
+	optimizer = tf.train.AdamOptimizer(.00001).minimize(cost)
 
-	with tf.Session() as sess:
+	gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
+
+	with tf.Session(config=tf.ConfigProto(log_device_placement=True, gpu_options=gpu_options)) as sess:
 		print("Starting TensorFlow session...")
 		sess.run(tf.global_variables_initializer())
 		sample, label = process_data('train50.h5')
 		print(sample.shape, label.shape)
 		test_samples, test_labels = process_data('test.h5')
-		print("Processed data!") 
-		
+		print("Processed data!")
+
 		graph_cost = []
 		graph_epoch = []
 
@@ -124,6 +129,7 @@ def model(x):
 		for epoch in range(epochs):
 			cost = 0
 			i = 0
+			#minibatches
 			while i < total_size:
 				batch_sample = sample[i:i+batch_size]
 				batch_size = sample[i:i+batch_size]
