@@ -106,16 +106,16 @@ def model(x):
         #Output
         w_fc2 = weight('w_f2', [1024, 3])
         b_fc2 = bias('b_fc2', [3])
-        prediction = tf.matmul(fc, w_fc2) + b_fc2
+        out = tf.matmul(fc, w_fc2) + b_fc2
 
-        #return out
+        return out
 
 
 ######## TRAIN MODEL ########
-#def train(x):
+def train(x):
         epochs = 150
         epsilon = .001
-        #prediction = model(x)
+        prediction = model(x)
         cost = (tf.losses.mean_squared_error(prediction, y))
         optimizer = tf.train.AdamOptimizer().minimize(cost)
 
@@ -150,5 +150,4 @@ def model(x):
                 print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels})))
 
 
-model(x)
-
+train(x)
