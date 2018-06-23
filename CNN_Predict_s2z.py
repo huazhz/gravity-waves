@@ -102,7 +102,6 @@ def model(x):
 	prediction = tf.matmul(fc, w_fc2) + b_fc2
 
 
-
 	epochs = 150
 	epsilon = .001
 	cost = (tf.losses.mean_squared_error(prediction, y))
@@ -114,17 +113,29 @@ def model(x):
 		sample, label = process_data('train50.h5')
 		print(sample.shape, label.shape)
 		test_samples, test_labels = process_data('test.h5')
-
-              	print("Processed data!") 
+		print("Processed data!") 
+		
 		graph_cost = []
 		graph_epoch = []
 
+		total_size = sample.size[0]
+		print("Number of samples: ", total_size)
+
 		for epoch in range(epochs):
-			_, c = sess.run([optimizer, cost], feed_dict = {x: sample, y: label})
+			cost = 0
+			i = 0
+			while i < total_size:
+				batch_sample = sample[i:i+batch_size]
+				batch_size = sample[i:i+batch_size]
+				_, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
+				i += batch_size
+				cost += c/(total_size/batch_size)
+
+
 			if epoch % 10 == 0:
 				graph_epoch.append(epoch)
 				graph_cost.append(c)
-				print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+				print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(cost))
 
 
 		print(w_fc2.eval())
@@ -141,3 +152,16 @@ def model(x):
 
 
 model(x)
+
+
+
+
+
+
+
+
+
+
+
+
+
