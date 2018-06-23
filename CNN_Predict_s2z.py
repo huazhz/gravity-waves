@@ -119,7 +119,9 @@ def train(x):
         cost = (tf.losses.mean_squared_error(prediction, y))
         optimizer = tf.train.AdamOptimizer().minimize(cost)
 
-        with tf.Session() as sess:
+
+	config = tf.ConfigProto(device_count = {'GPU': 0})
+        with tf.Session(config = config) as sess:
                 sess.run(tf.global_variables_initializer())
                 sample, label = process_data('train50.h5')
                 print(sample.shape, label.shape)
