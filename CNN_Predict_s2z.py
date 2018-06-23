@@ -38,16 +38,8 @@ def process_data(filename):
         #combine all three parameter vectors (each column is q, s1z, s2z)
         labels = np.concatenate((q, s1z, s2z), axis=0)
         labels = np.transpose(labels)
-        #print(labels[:,1])
 
         return dset, labels
-
-# dset, labels = generate_data('train.h5')
-# print(dset.shape)
-# print(dset)
-# print('\n')
-# print(labels.shape)
-# print(labels)
 
 ######## HELPER FUNCTIONS ########
 def weight(name, shape):
@@ -98,51 +90,73 @@ def model(x):
         #Flatten
         flat = tf.reshape(conv3, [-1, 120 * 256])
 
-        #Fully connected layer
+        #Fully connected layer 1
         w_fc1 = weight('w_fc1', [120 * 256, 1024])
         b_fc1 = bias('b_fc1', [1024])
         fc = tf.nn.relu(tf.matmul(flat, w_fc1) + b_fc1)
 
-        #Output
-        w_fc2 = weight('w_f2', [1024, 3])
-        b_fc2 = bias('b_fc2', [3])
-        out = tf.matmul(fc, w_fc2) + b_fc2
+        #Fully connected layer 2
+        w_fc2 = weight('w_f2', [1024, 20])
+        b_fc2 = bias('b_fc2', [20])
+        fc2 = tf.nn.relu(tf.matmul(fc, w_fc2) + b_fc2)
 
-        return out
+        #Output layer
+        w_fc3 = weight('w_fc3', [20, 3])
+        b_fc3 = bias('b_fc3', [3])
+        prediction = tf.matmul(fc2, w_fc3) + b_fc3
 
 
-######## TRAIN MODEL ########
-def train(x):
-        epochs = 150
+
+        #Training neural network
+        epochs = 100
         epsilon = .001
-        prediction = model(x)
-        cost = (tf.losses.mean_squared_error(prediction, y))
+        cost = tf.reduce_mean(tf.losses.mean_squared_error(prediction, y))
+        mse_q = tf.reduce_mean(tf.losses.mean_squared_error(prediction[0], y[1]))
+        mse_s1z = tf.reduce_mean(tf.losses.mean_squared_error(prediction[1], y[1]))
+        mse_s2z = tf.reduce_mean(tf.losses.mean_squared_error(prediction[2], y[2]))
         optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 
-	config = tf.ConfigProto(device_count = {'GPU': 0})
+        config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
+
         with tf.Session(config = config) as sess:
+                print("Starting TensorFlow session...")
                 sess.run(tf.global_variables_initializer())
                 sample, label = process_data('train50.h5')
                 print(sample.shape, label.shape)
                 test_samples, test_labels = process_data('test.h5')
-
-
+                print("Processed data!") 
+                
                 graph_cost = []
                 graph_epoch = []
 
+                total_size = sample.size[0]
+                print("Number of samples: ", total_size)
+
                 for epoch in range(epochs):
-                        _, c = sess.run([optimizer, cost], feed_dict = {x: sample, y: label})
+                        cost = 0
+                        i = 0
+                        while i < total_size:
+                                batch_sample = sample[i:i+batch_size]
+                                batch_size = sample[i:i+batch_size]
+                                _, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
+                                i += batch_size
+                                cost += c/(total_size/batch_size)
+
+
                         if epoch % 10 == 0:
                                 graph_epoch.append(epoch)
                                 graph_cost.append(c)
-                                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+                                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(cost))
 
 
-                print(w_fc2.eval())
                 print("Optimization complete...\n")
                 print(prediction.eval({x: sample}))
                 print(label)
+
+                print("MSE for Q: " + mse_q.eval({x: sample, y: label}))
+                print("MSE for s1z: " + mse_s1z.eval({x: sample, y: label}))
+                print("MSE for s2z: " + mse_s2z.eval({x: sample, y: label}))
 
                 correct = (tf.abs(tf.subtract(prediction, y)) < epsilon) #see if the difference is less than the threshold
                 correct = tf.cast(correct, tf.float32)         #convert boolean tensor to float32
@@ -152,4 +166,9 @@ def train(x):
                 print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels})))
 
 
-train(x)
+model(x)
+
+
+
+
+
