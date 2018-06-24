@@ -3,6 +3,7 @@ import random
 import h5py as h5
 import tensorflow as tf
 
+np.set_printoptions(threshold=np.nan)
 
 ######## DATA PREPROCESSING ########
 def process_data(filename):
@@ -14,10 +15,10 @@ def process_data(filename):
 
         for key in f.keys():
                 #format and truncate the wave
-                data = np.array(f[key]) 
-                data = np.reshape(data, (1, -1)) 
-                data = np.squeeze(data) 
-                dset.append(data[0:15000]) 
+                data = np.array(f[key])
+                data = np.reshape(data, (1, -1))
+                data = np.squeeze(data)
+                dset.append(data[0:15000])
 
                 #extract each BBH parameter from the key name
                 q.append(float(key[2:6]))
@@ -46,7 +47,7 @@ def weight(name, shape):
         return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
 
 def bias(name, shape):
-        return tf.Variable(tf.random_normal(shape), name=name)
+        return tf.Variable(tf.random_normal(shape)/10, name=name)
 
 def conv(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
@@ -63,8 +64,8 @@ def model(x):
         #Reshape input
         inp = tf.reshape(x, [-1, 15000, 1, 1])
 
-        #Convolutional layer 
-        w_conv1 = weight('w_conv1', [16, 1, 1, 64])
+        #Convolutional layer
+        w_conv1 = weight('w_conv1', [80, 1, 1, 64])
         b_conv1 = bias('b_conv1', [64])
         conv1 = tf.nn.relu(conv(inp, w_conv1) + b_conv1)
 
@@ -72,7 +73,7 @@ def model(x):
         conv1 = maxPool(conv1)
 
         #Convolutional layer 2
-        w_conv2 = weight('w_conv2', [16, 1, 64, 128])
+        w_conv2 = weight('w_conv2', [5, 1, 64, 128])
         b_conv2 = bias('b_conv2', [128])
         conv2 = tf.nn.relu(conv(conv1, w_conv2) + b_conv2)
 
@@ -80,12 +81,16 @@ def model(x):
         conv2 = maxPool(conv2)
 
         #Convolutional layer 3
-        w_conv3 = weight('w_conv3', [16, 1, 128, 256])
+        w_conv3 = weight('w_conv3', [5, 1, 128, 256])
         b_conv3 = bias('b_conv3', [256])
         conv3 = tf.nn.relu(conv(conv2, w_conv3) + b_conv3)
 
         #Max pool 3
         conv3 = maxPool(conv3)
+
+	#Convolutional 
+
+
 
         #Flatten
         flat = tf.reshape(conv3, [-1, 120 * 256])
@@ -98,7 +103,7 @@ def model(x):
         #Fully connected layer 2
         w_fc2 = weight('w_f2', [1024, 20])
         b_fc2 = bias('b_fc2', [20])
-        fc2 = tf.nn.relu(tf.matmul(fc, w_fc2) + b_fc2)
+        fc2 = tf.nn.tanh(tf.matmul(fc, w_fc2) + b_fc2)
 
         #Output layer
         w_fc3 = weight('w_fc3', [20, 3])
@@ -108,15 +113,17 @@ def model(x):
 
 
         #Training neural network
-        epochs = 100
+        epochs = 20
         epsilon = .001
-        cost = tf.reduce_mean(tf.losses.mean_squared_error(prediction, y))
-        mse_q = tf.reduce_mean(tf.losses.mean_squared_error(prediction[0], y[1]))
-        mse_s1z = tf.reduce_mean(tf.losses.mean_squared_error(prediction[1], y[1]))
-        mse_s2z = tf.reduce_mean(tf.losses.mean_squared_error(prediction[2], y[2]))
-        optimizer = tf.train.AdamOptimizer().minimize(cost)
+        cost = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
+        mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
+        mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
+        mse_s2z = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
+        optimizer = tf.train.AdamOptimizer(.00003).minimize(cost)
 
 
+
+	batch_size = 5
         config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
 
         with tf.Session(config = config) as sess:
@@ -125,38 +132,71 @@ def model(x):
                 sample, label = process_data('train50.h5')
                 print(sample.shape, label.shape)
                 test_samples, test_labels = process_data('test.h5')
-                print("Processed data!") 
-                
+                print("Processed data!")
+		#print(label[:,0])
                 graph_cost = []
                 graph_epoch = []
 
-                total_size = sample.size[0]
+                total_size = (sample.shape)[0]
                 print("Number of samples: ", total_size)
 
                 for epoch in range(epochs):
-                        cost = 0
+                        cost_ = 0
                         i = 0
-                        while i < total_size:
-                                batch_sample = sample[i:i+batch_size]
-                                batch_size = sample[i:i+batch_size]
-                                _, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
-                                i += batch_size
-                                cost += c/(total_size/batch_size)
+			temp_sample = sample
+			temp_label = label
 
+                        np.random.seed(epoch%1000)
+                        np.random.shuffle(temp_sample)
+
+			np.random.seed(epoch%1000)
+                        np.random.shuffle(temp_label)
+
+			#print(temp_label)
+
+                        while i < total_size:
+				#np.random.seed(epoch%1000) #ensure that both the labels and the sample are shuffled in the same pattern
+				batch_sample = temp_sample[i:i+batch_size]
+                                batch_label = temp_label[i:i+batch_size]
+
+				#np.random.seed(epoch%1000)
+				#np.random.shuffle(batch_sample)
+
+				#np.random.seed(epoch%1000)
+				#np.random.shuffle(batch_label)
+
+                                _, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
+
+                                #print(prediction.eval(feed_dict = {x: batch_sample, y: batch_label}))
+				#print(batch_label)
+				#print(fc.eval({x: batch_sample, y: batch_label}))
+				i += batch_size
+                                cost_ += c/(total_size/batch_size)
 
                         if epoch % 10 == 0:
                                 graph_epoch.append(epoch)
                                 graph_cost.append(c)
-                                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(cost))
+                                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+		#print(sample.shape)
+		#print(sample[0].shape)
+		#print(np.transpose(sample[0]).shape)
 
+
+		print("\n\n\n")
+		print(fc.eval({x: sample[0].reshape((1, 15000))}))
+                print("\n\n\n")
+
+                print("\n\n\n")
+                print(fc.eval({x: sample[1].reshape((1, 15000))}))
+                print("\n\n\n")
 
                 print("Optimization complete...\n")
                 print(prediction.eval({x: sample}))
                 print(label)
 
-                print("MSE for Q: " + mse_q.eval({x: sample, y: label}))
-                print("MSE for s1z: " + mse_s1z.eval({x: sample, y: label}))
-                print("MSE for s2z: " + mse_s2z.eval({x: sample, y: label}))
+                print("MSE for Q: ",  mse_q.eval({x: sample, y: label}))
+                print("MSE for s1z: ", mse_s1z.eval({x: sample, y: label}))
+                print("MSE for s2z: ",  mse_s2z.eval({x: sample, y: label}))
 
                 correct = (tf.abs(tf.subtract(prediction, y)) < epsilon) #see if the difference is less than the threshold
                 correct = tf.cast(correct, tf.float32)         #convert boolean tensor to float32
