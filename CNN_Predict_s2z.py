@@ -47,13 +47,13 @@ def weight(name, shape):
         return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
 
 def bias(name, shape):
-        return tf.Variable(tf.random_normal(shape)/10, name=name)
+        return tf.Variable(tf.random_normal(shape), name=name)
 
 def conv(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
 
-def maxPool(x):
-    return tf.nn.max_pool(x, ksize=[1, 5, 1, 1], strides=[1, 5, 1, 1], padding = 'SAME')
+def maxPool(x, n):
+    return tf.nn.max_pool(x, ksize=[1, n, 1, 1], strides=[1, n, 1, 1], padding = 'SAME')
 
 
 ######## CNN MODEL ########
@@ -64,62 +64,84 @@ def model(x):
         #Reshape input
         inp = tf.reshape(x, [-1, 15000, 1, 1])
 
-        #Convolutional layer
+        #Convolutional layer 1,2
         w_conv1 = weight('w_conv1', [80, 1, 1, 64])
         b_conv1 = bias('b_conv1', [64])
         conv1 = tf.nn.relu(conv(inp, w_conv1) + b_conv1)
 
+	w_conv2 = weight('w_conv2', [20, 1, 64, 64])
+	b_conv2 = bias('b_conv2', [64])
+	conv2 = tf.nn.relu(conv(conv1, w_conv2) + b_conv2)
+
         #Max pool 1
-        conv1 = maxPool(conv1)
+        conv2 = maxPool(conv2, 5)
+	print(conv2.shape)
 
-        #Convolutional layer 2
-        w_conv2 = weight('w_conv2', [5, 1, 64, 128])
-        b_conv2 = bias('b_conv2', [128])
-        conv2 = tf.nn.relu(conv(conv1, w_conv2) + b_conv2)
-
-        #Max pool 2
-        conv2 = maxPool(conv2)
-
-        #Convolutional layer 3
-        w_conv3 = weight('w_conv3', [5, 1, 128, 256])
-        b_conv3 = bias('b_conv3', [256])
+        #Convolutional layer 3,4
+        w_conv3 = weight('w_conv3', [5, 1, 64, 128])
+        b_conv3 = bias('b_conv3', [128])
         conv3 = tf.nn.relu(conv(conv2, w_conv3) + b_conv3)
 
+        w_conv4 = weight('w_conv4', [5, 1, 128, 128])
+        b_conv4 = bias('b_conv4', [128])
+        conv4 = tf.nn.relu(conv(conv3, w_conv4) + b_conv4)
+
+
+        #Max pool 2
+        conv4 = maxPool(conv4, 5)
+	print(conv4.shape)
+
+        #Convolutional layer 5
+        w_conv5 = weight('w_conv5', [5, 1, 128, 256])
+        b_conv5 = bias('b_conv5', [256])
+        conv5 = tf.nn.relu(conv(conv4, w_conv5) + b_conv5)
+
         #Max pool 3
-        conv3 = maxPool(conv3)
+        conv5 = maxPool(conv5, 5)
+	print(conv5.shape)
 
-	#Convolutional 
 
+	#Convolutional layer 6
+	w_conv6 = weight('w_conv6', [5, 1, 256, 256])
+	b_conv6 = bias('b_conv6', [256])
+	conv6 = tf.nn.relu(conv(conv5, w_conv6) + b_conv6)
 
+	#Max pool 4
+	conv6 = maxPool(conv6, 5)
+	print(conv6.shape)
+
+	#Convolution layer 7
+	w_conv7 = weight('w_conv7', [5, 1, 256, 256])
+	b_conv7 = bias('b_conv7', [256])
+	conv7 = tf.nn.relu(conv(conv6, w_conv7) + b_conv7)
+
+	#Max pool 5
+	conv7 = maxPool(conv7, 4)
+	print(conv7.shape)
 
         #Flatten
-        flat = tf.reshape(conv3, [-1, 120 * 256])
+        flat = tf.reshape(conv7, [-1, 6 * 256])
 
-        #Fully connected layer 1
-        w_fc1 = weight('w_fc1', [120 * 256, 1024])
-        b_fc1 = bias('b_fc1', [1024])
-        fc = tf.nn.relu(tf.matmul(flat, w_fc1) + b_fc1)
-
-        #Fully connected layer 2
-        w_fc2 = weight('w_f2', [1024, 20])
-        b_fc2 = bias('b_fc2', [20])
-        fc2 = tf.nn.tanh(tf.matmul(fc, w_fc2) + b_fc2)
+	#Fully connected layer
+	w_fc = weight('w_fc', [6 * 256, 20])
+	b_fc = bias('b_fc', [20])
+	fc = tf.nn.tanh(tf.matmul(flat, w_fc) + b_fc)
 
         #Output layer
-        w_fc3 = weight('w_fc3', [20, 3])
-        b_fc3 = bias('b_fc3', [3])
-        prediction = tf.matmul(fc2, w_fc3) + b_fc3
+        w_fc1 = weight('w_fc1', [20, 3])
+        b_fc1 = bias('b_fc1', [3])
+        prediction = tf.matmul(fc, w_fc1) + b_fc1
 
 
 
         #Training neural network
         epochs = 20
         epsilon = .001
-        cost = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
+        cost = (tf.losses.mean_squared_error(prediction, y))
         mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
         mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
         mse_s2z = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
-        optimizer = tf.train.AdamOptimizer(.00003).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(.01).minimize(cost)
 
 
 
@@ -146,11 +168,11 @@ def model(x):
 			temp_sample = sample
 			temp_label = label
 
-                        np.random.seed(epoch%1000)
-                        np.random.shuffle(temp_sample)
+                        #np.random.seed(epoch%1000)
+                        #np.random.shuffle(temp_sample)
 
-			np.random.seed(epoch%1000)
-                        np.random.shuffle(temp_label)
+			#np.random.seed(epoch%1000)
+                        #np.random.shuffle(temp_label)
 
 			#print(temp_label)
 
@@ -182,13 +204,13 @@ def model(x):
 		#print(np.transpose(sample[0]).shape)
 
 
-		print("\n\n\n")
-		print(fc.eval({x: sample[0].reshape((1, 15000))}))
-                print("\n\n\n")
+		#print("\n\n\n")
+		#print(fc.eval({x: sample[0].reshape((1, 15000))}))
+                #print("\n\n\n")
 
-                print("\n\n\n")
-                print(fc.eval({x: sample[1].reshape((1, 15000))}))
-                print("\n\n\n")
+                #print("\n\n\n")
+                #print(fc.eval({x: sample[1].reshape((1, 15000))}))
+                #print("\n\n\n")
 
                 print("Optimization complete...\n")
                 print(prediction.eval({x: sample}))
