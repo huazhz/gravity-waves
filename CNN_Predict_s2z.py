@@ -18,7 +18,14 @@ def process_data(filename):
                 data = np.array(f[key])
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
-                dset.append(data[0:15000])
+                data = data[0:15000]
+
+                # subtract mean, normalize amplitude
+                mean = np.mean(data)
+                data = data - mean
+                peak = np.maximum(np.abs(data))
+                data = data/peak
+                dset.append(data)
 
                 #extract each BBH parameter from the key name
                 q.append(float(key[2:6]))
