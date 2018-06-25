@@ -18,7 +18,7 @@ def process_data(filename):
                 data = np.array(f[key])
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
-                data = data[0:15000]
+                data = data[-30000:]
 
                 # subtract mean, normalize amplitude
                 mean = np.mean(data)
@@ -65,12 +65,12 @@ def maxPool(x, n):
 
 
 ######## CNN MODEL ########
-x = tf.placeholder(tf.float32, shape = [None, 15000])
+x = tf.placeholder(tf.float32, shape = [None, 30000])
 y = tf.placeholder(tf.float32, shape = [None, 3])
 
 def model(x):
         #Reshape input
-        inp = tf.reshape(x, [-1, 15000, 1, 1])
+        inp = tf.reshape(x, [-1, 30000, 1, 1])
 
         #Convolutional layer 1,2
         w_conv1 = weight('w_conv1', [80, 1, 1, 64])
@@ -126,10 +126,10 @@ def model(x):
 	print(conv7.shape)
 
         #Flatten
-        flat = tf.reshape(conv7, [-1, 6 * 256])
+        flat = tf.reshape(conv7, [-1, 12 * 256])
 
 	#Fully connected layer
-	w_fc = weight('w_fc', [6 * 256, 20])
+	w_fc = weight('w_fc', [12 * 256, 20])
 	b_fc = bias('b_fc', [20])
 	fc = tf.nn.elu(tf.matmul(flat, w_fc) + b_fc)
 
@@ -139,18 +139,25 @@ def model(x):
         prediction = tf.nn.sigmoid(tf.matmul(fc, w_fc1) + b_fc1)
 
         #Training neural network
-        epochs = 5
-        epsilon = .0025
+        epochs = 100
+        epsilon = 2
         cost = (tf.losses.mean_squared_error(prediction, y))
 	#cost = tf.reduce_mean(-.5 * ((1 - y)*tf.log(tf.abs(1 - tf.nn.tanh(prediction))) + (1 + y)*tf.log(tf.abs(1 + tf.nn.tanh(prediction)))))
 	#cost = tf.losses.huber_loss(y, prediction, delta = epsilon)
 
 
-        mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
-        mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
-        mse_s2z = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
-        optimizer = tf.train.AdamOptimizer(.0001).minimize(mse_s2z)
+        #mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
+        #mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
+        #mse_s2z = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
+        re_q = tf.divide(tf.abs(tf.subtract(prediction[:,0], y[:,0])), y[:,0]) * 100  #Relative error
+        re_s1z = tf.divide(tf.abs(tf.subtract(prediction[:,1], y[:,1])), y[:,1]) * 100  #Relative error
+	re_s2z = tf.divide(tf.abs(tf.subtract(prediction[:,2], y[:,2])), y[:,2]) * 100  #Relative error
 
+	q = tf.reduce_mean(re_q)
+	s1z = tf.reduce_mean(re_s1z)
+	s2z = tf.reduce_mean(re_s2z)
+
+        optimizer = tf.train.AdamOptimizer(.0001).minimize(cost)
 	batch_size = 10
         config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
 
@@ -163,41 +170,20 @@ def model(x):
                 print("Processed data!")
                 graph_cost = []
                 graph_epoch = []
-		print(sample[0])
-		print("\n\n\n\n")
-		print(sample[1])
                 total_size = (sample.shape)[0]
                 print("Number of samples: ", total_size)
 
                 for epoch in range(epochs):
                         cost_ = 0
                         i = 0
-			temp_sample = sample
-			temp_label = label
+			temp_sample = np.copy(sample)
+			temp_label = np.copy(label)
 
-                        #np.random.seed(epoch%1000)
-                        #np.random.shuffle(temp_sample)
+                        np.random.seed(epoch%1000)
+                        np.random.shuffle(temp_sample)
+			np.random.seed(epoch%1000)
+                        np.random.shuffle(temp_label)
 
-			#np.random.seed(epoch%1000)
-                        #np.random.shuffle(temp_label)
-
-			#print(temp_label)
-                        #print("\nEPOCH: " + str(epoch))
-                        #print("\n\n\nFC for samples 0 and 1")
-                        #print(fc.eval({x: sample[0].reshape((1, 15000))}) - fc.eval({x: sample[1].reshape((1, 15000))}))
-                        #print("\n\n\n")
-
-                        #print("\n\n\nConv7: ")
-                        #print(conv7.eval({x: sample[0].reshape((1, 15000))}) - conv7.eval({x: sample[1].reshape((1, 15000))}))
-                        #print("\n\n\n")
-
-                        #print("\n\n\nConv1: ")
-                        #print(conv1.eval({x: sample[0].reshape((1, 15000))}) - conv1.eval({x: sample[1].reshape((1, 15000))}))
-                        #print("\n\n\n")
-
-                        #print("\n\n\nInput: ")
-                        #print(inp.eval({x: sample[0].reshape((1, 15000))}) - inp.eval({x: sample[1].reshape((1, 15000))}))
-			#print("\n\n\n")
 
                         while i < total_size:
 				batch_sample = temp_sample[i:i+batch_size]
@@ -212,29 +198,25 @@ def model(x):
                                 graph_cost.append(c)
                                 print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
-		#print("\n\n\nFC for samples 0 and 1")
-		#print(fc.eval({x: sample[0].reshape((1, 15000))}) - fc.eval({x: sample[1].reshape((1, 15000))}))
-                #print("\n\n\n")
-
-                #print("\n\n\nConv7: ")
- 		#print(conv7.eval({x: sample[0].reshape((1, 15000))}) - conv7.eval({x: sample[1].reshape((1, 15000))}))
-                #print(fc.eval({x: sample[1].reshape((1, 15000))}))
-                #print("\n\n\n")
-
                 print("Optimization complete...\n")
-                print(prediction.eval({x: sample}))
+                print("Training set predictions: ")
+		print(prediction.eval({x: sample}))
                 print(label)
 
-                print("MSE for Q: ",  mse_q.eval({x: sample, y: label}))
-                print("MSE for s1z: ", mse_s1z.eval({x: sample, y: label}))
-                print("MSE for s2z: ",  mse_s2z.eval({x: sample, y: label}))
+		print("Test set predictions: ")
+		print(prediction.eval({x: test_samples}))
+		print(test_labels)
 
-                correct = (tf.abs(tf.subtract(prediction, y)) < epsilon) #see if the difference is less than the threshold
+                print("MSE for Q: ",  q.eval({x: sample, y: label}))
+                print("MSE for s1z: ", s1z.eval({x: sample, y: label}))
+                print("MSE for s2z: ", s2z.eval({x: sample, y: label}))
+
+                correct = (re_s2z < epsilon) #see if the difference is less than the threshold
                 correct = tf.cast(correct, tf.float32)         #convert boolean tensor to float32
-                accuracy = tf.reduce_mean(correct, axis=None)
+                accuracy = tf.reduce_mean(correct, axis=None)*100
 
-                print('Training set accuracy: ', (accuracy.eval({x: sample, y: label})))
-                print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels})))
+                print('Training set accuracy: ', (accuracy.eval({x: sample, y: label}), '%'))
+                print('Test set accuracy: ', (accuracy.eval({x: test_samples, y: test_labels}), '%'))
 
 
 model(x)
