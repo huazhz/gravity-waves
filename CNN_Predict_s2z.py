@@ -47,7 +47,8 @@ def weight(name, shape):
         return tf.get_variable(name, shape=shape, initializer = tf.contrib.layers.xavier_initializer())
 
 def bias(name, shape):
-        return tf.Variable(tf.random_normal(shape), name=name)
+        #return tf.Variable(tf.random_normal(shape), name=name)
+	return tf.get_variable(name, shape=shape, initializer = tf.constant_initializer(.1))
 
 def conv(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
@@ -67,11 +68,11 @@ def model(x):
         #Convolutional layer 1,2
         w_conv1 = weight('w_conv1', [80, 1, 1, 64])
         b_conv1 = bias('b_conv1', [64])
-        conv1 = tf.nn.relu(conv(inp, w_conv1) + b_conv1)
+        conv1 = tf.nn.elu(conv(inp, w_conv1) + b_conv1)
 
 	w_conv2 = weight('w_conv2', [20, 1, 64, 64])
 	b_conv2 = bias('b_conv2', [64])
-	conv2 = tf.nn.relu(conv(conv1, w_conv2) + b_conv2)
+	conv2 = tf.nn.elu(conv(conv1, w_conv2) + b_conv2)
 
         #Max pool 1
         conv2 = maxPool(conv2, 5)
@@ -80,12 +81,11 @@ def model(x):
         #Convolutional layer 3,4
         w_conv3 = weight('w_conv3', [5, 1, 64, 128])
         b_conv3 = bias('b_conv3', [128])
-        conv3 = tf.nn.relu(conv(conv2, w_conv3) + b_conv3)
+        conv3 = tf.nn.elu(conv(conv2, w_conv3) + b_conv3)
 
         w_conv4 = weight('w_conv4', [5, 1, 128, 128])
         b_conv4 = bias('b_conv4', [128])
-        conv4 = tf.nn.relu(conv(conv3, w_conv4) + b_conv4)
-
+        conv4 = tf.nn.elu(conv(conv3, w_conv4) + b_conv4)
 
         #Max pool 2
         conv4 = maxPool(conv4, 5)
@@ -94,17 +94,16 @@ def model(x):
         #Convolutional layer 5
         w_conv5 = weight('w_conv5', [5, 1, 128, 256])
         b_conv5 = bias('b_conv5', [256])
-        conv5 = tf.nn.relu(conv(conv4, w_conv5) + b_conv5)
+        conv5 = tf.nn.elu(conv(conv4, w_conv5) + b_conv5)
 
         #Max pool 3
         conv5 = maxPool(conv5, 5)
 	print(conv5.shape)
 
-
 	#Convolutional layer 6
 	w_conv6 = weight('w_conv6', [5, 1, 256, 256])
 	b_conv6 = bias('b_conv6', [256])
-	conv6 = tf.nn.relu(conv(conv5, w_conv6) + b_conv6)
+	conv6 = tf.nn.elu(conv(conv5, w_conv6) + b_conv6)
 
 	#Max pool 4
 	conv6 = maxPool(conv6, 5)
@@ -113,7 +112,7 @@ def model(x):
 	#Convolution layer 7
 	w_conv7 = weight('w_conv7', [5, 1, 256, 256])
 	b_conv7 = bias('b_conv7', [256])
-	conv7 = tf.nn.relu(conv(conv6, w_conv7) + b_conv7)
+	conv7 = tf.nn.elu(conv(conv6, w_conv7) + b_conv7)
 
 	#Max pool 5
 	conv7 = maxPool(conv7, 4)
@@ -125,27 +124,27 @@ def model(x):
 	#Fully connected layer
 	w_fc = weight('w_fc', [6 * 256, 20])
 	b_fc = bias('b_fc', [20])
-	fc = tf.nn.tanh(tf.matmul(flat, w_fc) + b_fc)
+	fc = tf.nn.elu(tf.matmul(flat, w_fc) + b_fc)
 
         #Output layer
         w_fc1 = weight('w_fc1', [20, 3])
         b_fc1 = bias('b_fc1', [3])
-        prediction = tf.matmul(fc, w_fc1) + b_fc1
-
-
+        prediction = tf.nn.sigmoid(tf.matmul(fc, w_fc1) + b_fc1)
 
         #Training neural network
-        epochs = 20
-        epsilon = .001
+        epochs = 5
+        epsilon = .0025
         cost = (tf.losses.mean_squared_error(prediction, y))
+	#cost = tf.reduce_mean(-.5 * ((1 - y)*tf.log(tf.abs(1 - tf.nn.tanh(prediction))) + (1 + y)*tf.log(tf.abs(1 + tf.nn.tanh(prediction)))))
+	#cost = tf.losses.huber_loss(y, prediction, delta = epsilon)
+
+
         mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
         mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
         mse_s2z = (tf.losses.mean_squared_error(prediction[:,2], y[:,2]))
-        optimizer = tf.train.AdamOptimizer(.01).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(.0001).minimize(mse_s2z)
 
-
-
-	batch_size = 5
+	batch_size = 10
         config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
 
         with tf.Session(config = config) as sess:
@@ -155,10 +154,10 @@ def model(x):
                 print(sample.shape, label.shape)
                 test_samples, test_labels = process_data('test.h5')
                 print("Processed data!")
-		#print(label[:,0])
                 graph_cost = []
                 graph_epoch = []
-
+		print(sample[0])
+		print(sample[1])
                 total_size = (sample.shape)[0]
                 print("Number of samples: ", total_size)
 
@@ -175,23 +174,28 @@ def model(x):
                         #np.random.shuffle(temp_label)
 
 			#print(temp_label)
+                        #print("\nEPOCH: " + str(epoch))
+                        #print("\n\n\nFC for samples 0 and 1")
+                        #print(fc.eval({x: sample[0].reshape((1, 15000))}) - fc.eval({x: sample[1].reshape((1, 15000))}))
+                        #print("\n\n\n")
+
+                        #print("\n\n\nConv7: ")
+                        #print(conv7.eval({x: sample[0].reshape((1, 15000))}) - conv7.eval({x: sample[1].reshape((1, 15000))}))
+                        #print("\n\n\n")
+
+                        #print("\n\n\nConv1: ")
+                        #print(conv1.eval({x: sample[0].reshape((1, 15000))}) - conv1.eval({x: sample[1].reshape((1, 15000))}))
+                        #print("\n\n\n")
+
+                        #print("\n\n\nInput: ")
+                        #print(inp.eval({x: sample[0].reshape((1, 15000))}) - inp.eval({x: sample[1].reshape((1, 15000))}))
+			#print("\n\n\n")
 
                         while i < total_size:
-				#np.random.seed(epoch%1000) #ensure that both the labels and the sample are shuffled in the same pattern
 				batch_sample = temp_sample[i:i+batch_size]
                                 batch_label = temp_label[i:i+batch_size]
 
-				#np.random.seed(epoch%1000)
-				#np.random.shuffle(batch_sample)
-
-				#np.random.seed(epoch%1000)
-				#np.random.shuffle(batch_label)
-
                                 _, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
-
-                                #print(prediction.eval(feed_dict = {x: batch_sample, y: batch_label}))
-				#print(batch_label)
-				#print(fc.eval({x: batch_sample, y: batch_label}))
 				i += batch_size
                                 cost_ += c/(total_size/batch_size)
 
@@ -199,16 +203,13 @@ def model(x):
                                 graph_epoch.append(epoch)
                                 graph_cost.append(c)
                                 print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
-		#print(sample.shape)
-		#print(sample[0].shape)
-		#print(np.transpose(sample[0]).shape)
 
-
-		#print("\n\n\n")
-		#print(fc.eval({x: sample[0].reshape((1, 15000))}))
+		#print("\n\n\nFC for samples 0 and 1")
+		#print(fc.eval({x: sample[0].reshape((1, 15000))}) - fc.eval({x: sample[1].reshape((1, 15000))}))
                 #print("\n\n\n")
 
-                #print("\n\n\n")
+                #print("\n\n\nConv7: ")
+ 		#print(conv7.eval({x: sample[0].reshape((1, 15000))}) - conv7.eval({x: sample[1].reshape((1, 15000))}))
                 #print(fc.eval({x: sample[1].reshape((1, 15000))}))
                 #print("\n\n\n")
 
