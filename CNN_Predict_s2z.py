@@ -3,7 +3,7 @@ np.set_printoptions(threshold=np.nan)
 import random
 import h5py as h5
 import tensorflow as tf
-from parse_data.py import *
+from parse_data import *
 
 ######## CNN MODEL ########
 x = tf.placeholder(tf.float32, shape = [None, 30000])
