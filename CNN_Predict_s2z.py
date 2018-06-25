@@ -23,7 +23,7 @@ def process_data(filename):
                 # subtract mean, normalize amplitude
                 mean = np.mean(data)
                 data = data - mean
-                peak = np.maximum(np.abs(data))
+                peak = np.amax(np.abs(data))
                 data = data/peak
                 dset.append(data)
 
@@ -164,6 +164,7 @@ def model(x):
                 graph_cost = []
                 graph_epoch = []
 		print(sample[0])
+		print("\n\n\n\n")
 		print(sample[1])
                 total_size = (sample.shape)[0]
                 print("Number of samples: ", total_size)
