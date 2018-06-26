@@ -81,11 +81,8 @@ def model(x):
 
         #Training neural network
         epochs = 100
-        epsilon = 2
+        epsilon = 10
         cost = (tf.losses.mean_squared_error(prediction, y))
-	#cost = tf.reduce_mean(-.5 * ((1 - y)*tf.log(tf.abs(1 - tf.nn.tanh(prediction))) + (1 + y)*tf.log(tf.abs(1 + tf.nn.tanh(prediction)))))
-	#cost = tf.losses.huber_loss(y, prediction, delta = epsilon)
-
 
         #mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
         #mse_s1z = (tf.losses.mean_squared_error(prediction[:,1], y[:,1]))
@@ -99,7 +96,7 @@ def model(x):
 	s2z = tf.reduce_mean(re_s2z)
 
         optimizer = tf.train.AdamOptimizer(.0001).minimize(cost)
-	batch_size = 10
+	batch_size = 5
         config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
 
         with tf.Session(config = config) as sess:
@@ -148,9 +145,9 @@ def model(x):
 		print(prediction.eval({x: test_samples}))
 		print(test_labels)
 
-                print("MSE for Q: ",  q.eval({x: sample, y: label}))
-                print("MSE for s1z: ", s1z.eval({x: sample, y: label}))
-                print("MSE for s2z: ", s2z.eval({x: sample, y: label}))
+                print("Relative Error for Q: ",  q.eval({x: sample, y: label}))
+                print("Relative Error for s1z: ", s1z.eval({x: sample, y: label}))
+                print("Relative Error for s2z: ", s2z.eval({x: sample, y: label}))
 
                 correct = (re_s2z < epsilon) #see if the difference is less than the threshold
                 correct = tf.cast(correct, tf.float32)         #convert boolean tensor to float32
