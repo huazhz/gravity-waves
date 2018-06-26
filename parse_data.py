@@ -3,7 +3,7 @@ import random
 import h5py as h5
 import tensorflow as tf
 
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 ######## DATA PREPROCESSING ########
 def process_data(filename):
@@ -19,6 +19,7 @@ def process_data(filename):
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
                 data = data[-30000:]
+		data = data.astype(np.float)
 
                 # subtract mean, normalize amplitude
                 mean = np.mean(data)
