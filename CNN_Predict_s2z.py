@@ -102,9 +102,9 @@ def model(x):
         with tf.Session() as sess:
                 print("Starting TensorFlow session...")
                 sess.run(tf.global_variables_initializer())
-                sample, label = process_data('train50.h5')
+                sample, label = process_data('train70.h5')
                 print(sample.shape, label.shape)
-                test_samples, test_labels = process_data('test.h5')
+                test_samples, test_labels = process_data('test70.h5')
                 print("Processed data!")
                 graph_cost = []
                 graph_epoch = []
