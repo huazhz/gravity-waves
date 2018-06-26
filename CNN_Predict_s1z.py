@@ -68,8 +68,8 @@ def model(x, threshold, lr):
     print(conv8.shape)
 
     #Convolution layer 9
-    w_conv9 = weight('w_conv7', [5, 1, 256, 256])
-    b_conv9 = bias('b_conv7', [256])
+    w_conv9 = weight('w_conv9', [5, 1, 256, 256])
+    b_conv9 = bias('b_conv9', [256])
     conv9 = tf.nn.relu(conv(conv8, w_conv9) + b_conv9)
 
     #Max pool 5
@@ -111,9 +111,9 @@ def model(x, threshold, lr):
     with tf.Session() as sess:
         print("Starting TensorFlow session...")
         sess.run(tf.global_variables_initializer())
-        sample, label = process_data('train70.h5')
+        sample, label = process_data('train50.h5')
         print(sample.shape, label.shape)
-        test_samples, test_labels = process_data('test70.h5')
+        test_samples, test_labels = process_data('test.h5')
         print("Processed data!")
         graph_cost = []
         graph_epoch = []
@@ -123,7 +123,7 @@ def model(x, threshold, lr):
         for epoch in range(epochs):
             cost_ = 0
             i = 0
-        
+
             temp_sample = np.copy(sample)
             temp_label = np.copy(label)
 
@@ -141,31 +141,30 @@ def model(x, threshold, lr):
                 i += batch_size
                 cost_ += c/(total_size/batch_size)
 
-                if epoch % 10 == 0:
-                    graph_epoch.append(epoch)
-                    graph_cost.append(c)
-                    print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+	    if epoch % 10 == 0:
+		graph_epoch.append(epoch)
+                graph_cost.append(c)
+                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
+	print("Optimization complete...\n")
+        print("Training set predictions: ")
+        print(prediction.eval({x: sample}))
+        print(label)
 
-            print("Optimization complete...\n")
-            print("Training set predictions: ")
-            print(prediction.eval({x: sample}))
-            print(label)
+        print("Test set predictions: ")
+        print(prediction.eval({x: test_samples}))
+        print(test_labels)
 
-            print("Test set predictions: ")
-            print(prediction.eval({x: test_samples}))
-            print(test_labels)
+        print("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
+        print("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
+        print("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
 
-            print("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
-            print("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
-            print("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
+        correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
+        correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
+        accuracy = tf.reduce_mean(correct, axis=None) * 100     #convert to a percentage
 
-            correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
-            correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
-            accuracy = tf.reduce_mean(correct, axis=None) * 100     #convert to a percentage
-
-            print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
-            print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+        print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
+        print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
 
 
 
