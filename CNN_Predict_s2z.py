@@ -155,9 +155,9 @@ def model(x, threshold, lr, batch_size, filename):
         # print("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
         # print("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
         # print("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
-        file_.write("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
-        file_.write("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
-        file_.write("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
+        file_.write("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels}) + "%\n"))
+        file_.write("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels}) + "%\n"))
+        file_.write("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels}) + "%\n"))
 
         correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
         correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
@@ -165,8 +165,8 @@ def model(x, threshold, lr, batch_size, filename):
 
         # print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
         # print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
-        file_.write("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
-        file_.write("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+        file_.write("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%\n")
+        file_.write("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%\n")
 
 	file_.close()
 
