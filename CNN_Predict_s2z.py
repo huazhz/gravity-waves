@@ -10,9 +10,10 @@ x = tf.placeholder(tf.float32, shape = [None, 30000])
 y = tf.placeholder(tf.float32, shape = [None, 3])
 
 def model(x, threshold, lr, batch_size, filename):
-    #Reshape input
+    print(filename)
     file_ = open(filename, 'w')
 
+    #Reshape input
     inp = tf.reshape(x, [-1, 30000, 1, 1])
 
     #Convolutional layer 1,2
@@ -82,7 +83,7 @@ def model(x, threshold, lr, batch_size, filename):
     prediction = tf.nn.tanh(tf.matmul(fc, w_fc1) + b_fc1)
 
     #Training neural network
-    epochs = 1000
+    epochs = 500
     cost = (tf.losses.mean_squared_error(prediction, y))
 
     #mse_q = (tf.losses.mean_squared_error(prediction[:,0], y[:,0]))
@@ -103,9 +104,9 @@ def model(x, threshold, lr, batch_size, filename):
     with tf.Session() as sess:
         #print("Starting TensorFlow session...")
         sess.run(tf.global_variables_initializer())
-        sample, label = process_data('train70.h5')
-        #print(sample.shape, label.shape)
-        test_samples, test_labels = process_data('test70.h5')
+        sample, label = process_data('train50.h5')
+        print(sample.shape, label.shape)
+        test_samples, test_labels = process_data('test.h5')
         #print("Processed data!")
         graph_cost = []
         graph_epoch = []
@@ -139,8 +140,8 @@ def model(x, threshold, lr, batch_size, filename):
 
 	    if epoch % 10 == 0:
 	 	    graph_epoch.append(epoch)
-            graph_cost.append(c)
-            #print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+           	    graph_cost.append(c)
+            	    print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
  #    print("Optimization complete...\n")
  #    print("Training set predictions: ")
@@ -167,14 +168,14 @@ def model(x, threshold, lr, batch_size, filename):
         file_.write("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
         file_.write("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
 
-
+	file_.close()
 ######## FIND OPTIMUM HYPERPARAMETERS ########
 lr = .000001
 while lr < .1:
-    for i in arange(2, 40):
+    for i in np.arange(2, 40):
 
-        filename = "model_lr_" + str(lr) + "_batch_size_" + str(i) + "_stats"
-        model(x, threshold = 5, lr = lr, batch_size = batch_size, filename = filename)
+        filename = "model_lr_" + str(lr) + "_batch_size_" + str(i) + "_stats.txt"
+        model(x, threshold = 5, lr = lr, batch_size = i, filename = filename)
 
     lr = lr * 10
 
