@@ -169,14 +169,18 @@ def model(x, threshold, lr, batch_size, filename):
         file_.write("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
 
 	file_.close()
+
+
+
+
+
 ######## FIND OPTIMUM HYPERPARAMETERS ########
 lr = .000001
 while lr < .1:
     for i in np.arange(2, 40):
-
         filename = "model_lr_" + str(lr) + "_batch_size_" + str(i) + "_stats.txt"
         model(x, threshold = 5, lr = lr, batch_size = i, filename = filename)
-
+        tf.reset_default_graph()
     lr = lr * 10
 
 
