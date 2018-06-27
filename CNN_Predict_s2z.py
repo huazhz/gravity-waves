@@ -9,8 +9,10 @@ from helper_functions import *
 x = tf.placeholder(tf.float32, shape = [None, 30000])
 y = tf.placeholder(tf.float32, shape = [None, 3])
 
-def model(x, threshold, lr):
+def model(x, threshold, lr, batch_size, filename):
     #Reshape input
+    file_ = open(filename, 'w')
+
     inp = tf.reshape(x, [-1, 30000, 1, 1])
 
     #Convolutional layer 1,2
@@ -95,20 +97,20 @@ def model(x, threshold, lr):
     s2z = tf.reduce_mean(re_s2z)
 
     optimizer = tf.train.AdamOptimizer(lr).minimize(cost)
-    batch_size = 4
+
     # config = tf.ConfigProto(device_count = {'GPU': 0}) #Use CPU instead of GPU
 
     with tf.Session() as sess:
-        print("Starting TensorFlow session...")
+        #print("Starting TensorFlow session...")
         sess.run(tf.global_variables_initializer())
         sample, label = process_data('train70.h5')
-        print(sample.shape, label.shape)
+        #print(sample.shape, label.shape)
         test_samples, test_labels = process_data('test70.h5')
-        print("Processed data!")
+        #print("Processed data!")
         graph_cost = []
         graph_epoch = []
         total_size = (sample.shape)[0]
-        print("Number of samples: ", total_size)
+        #print("Number of samples: ", total_size)
 
         for epoch in range(epochs):
             cost_ = 0
@@ -124,41 +126,61 @@ def model(x, threshold, lr):
 
             #Minibatches
             while i < total_size:
-                batch_sample = temp_sample[i:i+batch_size]
-                batch_label = temp_label[i:i+batch_size]
+                if i + batch_size < test_samples.shape[0]:
+                    batch_sample = temp_sample[i:i+batch_size]
+                    batch_label = temp_label[i:i+batch_size]
+                else:
+                    batch_sample = temp_sample[i:]
+                    batch_label = temp_label[i:]
 
                 _, c = sess.run([optimizer, cost], feed_dict = {x: batch_sample, y: batch_label})
                 i += batch_size
                 cost_ += c/(total_size/batch_size)
 
 	    if epoch % 10 == 0:
-	 	graph_epoch.append(epoch)
-                graph_cost.append(c)
-                print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
+	 	    graph_epoch.append(epoch)
+            graph_cost.append(c)
+            #print(str(epoch + 10) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
-	print("Optimization complete...\n")
-        print("Training set predictions: ")
-        print(prediction.eval({x: sample}))
-        print(label)
+ #    print("Optimization complete...\n")
+ #    print("Training set predictions: ")
+ #    print(prediction.eval({x: sample}))
+ #    print(label)
 
-        print("Test set predictions: ")
-        print(prediction.eval({x: test_samples}))
-        print(test_labels)
+ #    print("Test set predictions: ")
+ #    print(prediction.eval({x: test_samples}))
+ #    print(test_labels)
 
-        print("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
-        print("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
-        print("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
+        # print("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
+        # print("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
+        # print("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
+        file_.write("Relative Error for Q: " +  str(q.eval({x: test_samples, y: test_labels})))
+        file_.write("Relative Error for s1z: " + str(s1z.eval({x: test_samples, y: test_labels})))
+        file_.write("Relative Error for s2z: " +  str(s2z.eval({x: test_samples, y: test_labels})))
 
         correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
         correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
         accuracy = tf.reduce_mean(correct, axis=None) * 100     #convert to a percentage
 
-        print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
-        print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+        # print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
+        # print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+        file_.write("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
+        file_.write("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+
+
+######## FIND OPTIMUM HYPERPARAMETERS ########
+lr = .000001
+while lr < .1:
+    for i in arange(2, 40):
+
+        filename = "model_lr_" + str(lr) + "_batch_size_" + str(i) + "_stats"
+        model(x, threshold = 5, lr = lr, batch_size = batch_size, filename = filename)
+
+    lr = lr * 10
 
 
 
-model(x, threshold = 5, lr = .00001)
+#model(x, threshold = 5, lr = .00001, batch_size = 4)
 
 
 
