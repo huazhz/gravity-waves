@@ -15,7 +15,7 @@ for q in arange(1, 2, 1):
   s2x=0.
   s2y=0.
   #s1z=0.9
-  #s2z=-0.9
+  #s2z= 0.9
 
   for s1z in arange(.1, 1.0, .04):
    for s2z in arange(.1, 1.0, .04):
