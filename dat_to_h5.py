@@ -3,7 +3,7 @@ import glob
 import os
 import h5py as h5
 
-with h5.File('tests1z.h5', 'w') as h5f:
+with h5.File('train.h5', 'w') as h5f:
     for f in glob.glob('*.dat'):
         print f
         data = np.loadtxt(f)

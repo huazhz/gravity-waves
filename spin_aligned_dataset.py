@@ -7,7 +7,7 @@ from numpy import *
 waveforms = []
 
 
-for q in arange(1, 2, 1):
+for q in arange(2, 3, 1):
   M = 30.
   eta = q / (1. + q)**2
   s1x=0.
@@ -17,8 +17,8 @@ for q in arange(1, 2, 1):
   #s1z=0.9
   #s2z= 0.9
 
-  for s1z in arange(.1, 1.0, .04):
-   for s2z in arange(.1, 1.0, .04):
+  for s1z in arange(.58, 1.0, .02):
+   for s2z in arange(.1, 1.0, .02):
       m1, m2 = mtotal_eta_to_mass1_mass2(M, eta)
 
       hp, hc = get_td_waveform(approximant='SEOBNRv3', mass1=m1, mass2=m2, spin1x=s1x, spin1y=s1y, spin1z=s1z, spin2x=s2x, spin2y=s2y, spin2z=s2z, f_lower=15., delta_t=1./16384.)
