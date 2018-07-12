@@ -156,10 +156,11 @@ def train(lr, batch_size, threshold, epochs):
         relative_s2z = 0
         i = 0
 
+	bsize = 1
         while i < total_size:
-            if i + batch_size < sample.shape[0]:
-                batch_sample = sample[i:i+batch_size]
-                batch_label = label[i:i+batch_size]
+            if i + bsize < sample.shape[0]:
+                batch_sample = sample[i:i+bsize]
+                batch_label = label[i:i+bsize]
             else:
                 batch_sample = sample[i:]
                 batch_label = label[i:]
@@ -167,15 +168,15 @@ def train(lr, batch_size, threshold, epochs):
             relative_s1z += re_s1z.eval({x: batch_sample, y: batch_label})
             relative_s2z += re_s2z.eval({x: batch_sample, y: batch_label})
 
-
+	    i += bsize
 
 
 
         #print("Relative Error for s2z on training set: " +  str(s2z.eval({x: sample, y: label})) + "%")
         #print("Relative Error for s2z on test set: " +  str(s2z.eval({x: test_samples, y: test_labels})) + "%")
         
-        print("Relative Error for s1z on training set: " +  relative_s1z/total_size + "%")
-        print("Relative Error for s2z on training set: " +  relative_s2z/total_size + "%")
+        print("Relative Error for s1z on training set: " +  str(relative_s1z/total_size) + "%")
+        print("Relative Error for s2z on training set: " +  str(relative_s2z/total_size) + "%")
 
 
 
@@ -196,4 +197,4 @@ sizes = [10]
 
 for lr in lrs: 
     for size in sizes:
-        train(lr = lr, batch_size = size, threshold = 5, epochs = 100)
+        train(lr = lr, batch_size = size, threshold = 5, epochs = 200)
