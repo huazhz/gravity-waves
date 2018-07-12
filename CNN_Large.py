@@ -108,7 +108,7 @@ def train(lr, batch_size, threshold, epochs):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sample, label = process_data('data/train.h5')
-	test_samples, test_labels = process_data('datasets/tests2z.h5')
+        test_samples, test_labels = process_data('datasets/tests2z.h5')
 
         graph_cost = []
         graph_epoch = []
@@ -127,8 +127,8 @@ def train(lr, batch_size, threshold, epochs):
             np.random.shuffle(temp_label)
 
             #Minibatches
-	    batch_sample = []
-	    batch_label = []
+            batch_sample = []
+            batch_label = []
 
             while i < total_size:
                 if i + batch_size < temp_sample.shape[0]:
@@ -150,15 +150,42 @@ def train(lr, batch_size, threshold, epochs):
                 print(str(epoch + 50) + " out of " + str(epochs) + " completed. Loss: " + str(c))
 
 
-        print("Relative Error for s2z on training set: " +  str(s2z.eval({x: sample, y: label})) + "%")
-        print("Relative Error for s2z on test set: " +  str(s2z.eval({x: test_samples, y: test_labels})) + "%")
+
+        #Evaluate relative errors for s1z and s2z with minibatches
+        relative_s1z = 0
+        relative_s2z = 0
+        i = 0
+
+        while i < total_size:
+            if i + batch_size < sample.shape[0]:
+                batch_sample = sample[i:i+batch_size]
+                batch_label = label[i:i+batch_size]
+            else:
+                batch_sample = sample[i:]
+                batch_label = label[i:]
+
+            relative_s1z += re_s1z.eval({x: batch_sample, y: batch_label})
+            relative_s2z += re_s2z.eval({x: batch_sample, y: batch_label})
+
+
+
+
+
+        #print("Relative Error for s2z on training set: " +  str(s2z.eval({x: sample, y: label})) + "%")
+        #print("Relative Error for s2z on test set: " +  str(s2z.eval({x: test_samples, y: test_labels})) + "%")
         
-        correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
-        correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
-        accuracy = tf.reduce_mean(correct, axis=None) * 100     #convert to a percentage
+        print("Relative Error for s1z on training set: " +  relative_s1z/total_size + "%")
+        print("Relative Error for s2z on training set: " +  relative_s2z/total_size + "%")
+
+
+
+
+        #correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
+        #correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
+        #accuracy = tf.reduce_mean(correct, axis=None) * 100     #convert to a percentage
 
         #print("Training set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: sample, y: label})) + "%")
-        print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
+        #print("Test set accuracy (less than " + str(threshold) + "% relative error): " + str(accuracy.eval({x: test_samples, y: test_labels})) + "%")
         
 
         
