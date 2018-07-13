@@ -8,11 +8,11 @@ from helper_functions import *
 ######## CNN MODEL ########
 
 #Main placeholders
-x = tf.placeholder(tf.float32, shape = [None, 30000])
+x = tf.placeholder(tf.float32, shape = [None, 15000])
 y = tf.placeholder(tf.float32, shape = [None, 3])
 
 #Reshape input
-inp = tf.reshape(x, [-1, 30000, 1, 1])
+inp = tf.reshape(x, [-1, 15000, 1, 1])
 
 #Convolutional layer 1,2
 w_conv1 = weight('w_conv1', [80, 1, 1, 64])
@@ -68,10 +68,10 @@ conv7 = maxPool(conv7, 4)
 print(conv7.shape)
 
 #Flatten
-flat = tf.reshape(conv7, [-1, 12 * 256])
+flat = tf.reshape(conv7, [-1, 6 * 256])
 
 #Fully connected layer
-w_fc = weight('w_fc', [12 * 256, 20])
+w_fc = weight('w_fc', [6 * 256, 20])
 b_fc = bias('b_fc', [20])
 fc = tf.nn.relu(tf.matmul(flat, w_fc) + b_fc)
 
@@ -108,7 +108,7 @@ def train(lr, batch_size, threshold, epochs):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         sample, label = process_data('data/train.h5')
-        test_samples, test_labels = process_data('datasets/tests2z.h5')
+        test_samples, test_labels = process_data('datasets/test.h5')
 
         graph_cost = []
         graph_epoch = []
@@ -178,8 +178,11 @@ def train(lr, batch_size, threshold, epochs):
         print("Relative Error for s1z on training set: " +  str(relative_s1z/total_size) + "%")
         print("Relative Error for s2z on training set: " +  str(relative_s2z/total_size) + "%")
 
+        print("Relative Error for s1z on test set: " +  str(s1z.eval({x: test_samples, y: test_labels}))  + "%")
+        print("Relative Error for s2z on test set: " +  str(s2z.eval({x: test_samples, y: test_labels}))  + "%")	
 
-
+	print(test_labels)
+	print(prediction.eval({x: test_samples, y: test_labels}))
 
         #correct = (re_s2z < threshold)                          #see if the difference is less than the threshold
         #correct = tf.cast(correct, tf.float32)                  #convert boolean tensor to float32
@@ -192,8 +195,8 @@ def train(lr, batch_size, threshold, epochs):
         
 ######## RUN ########
 
-lrs = [.0001]
-sizes = [10]
+lrs = [.00005]
+sizes = [100]
 
 for lr in lrs: 
     for size in sizes:

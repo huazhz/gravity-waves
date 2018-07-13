@@ -18,7 +18,7 @@ def process_data(filename):
                 data = np.array(f[key])
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
-                data = data[-30000:]
+                data = data[-15000:]
 		data = data.astype(np.float)
 
                 # subtract mean, normalize amplitude
