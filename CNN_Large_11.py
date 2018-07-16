@@ -79,7 +79,7 @@ print(conv9.shape)
 flat = tf.reshape(conv9, [-1, 6 * 256])
 
 #Fully connected layer
-w_fc = weight('w_fc', [12 * 256, 20])
+w_fc = weight('w_fc', [6 * 256, 20])
 b_fc = bias('b_fc', [20])
 fc = tf.nn.relu(tf.matmul(flat, w_fc) + b_fc)
 #fc = tf.nn.dropout(fc, .9)
@@ -189,8 +189,8 @@ def train(lr, batch_size, threshold, epochs):
         print("Relative Error for s1z on test set: " +  str(s1z.eval({x: test_samples, y: test_labels}))  + "%")
         print("Relative Error for s2z on test set: " +  str(s2z.eval({x: test_samples, y: test_labels}))  + "%")	
 
-	print(test_labels)
-	print(prediction.eval({x: test_samples, y: test_labels}))
+	#print(test_labels)
+	#print(prediction.eval({x: test_samples, y: test_labels}))
 
 
         
@@ -198,7 +198,7 @@ def train(lr, batch_size, threshold, epochs):
         
 ######## RUN ########
 lrs = [.00005]
-sizes = [100]
+sizes = [250]
 
 for lr in lrs: 
     for size in sizes:
