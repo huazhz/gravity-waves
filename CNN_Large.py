@@ -200,4 +200,4 @@ sizes = [100]
 
 for lr in lrs: 
     for size in sizes:
-        train(lr = lr, batch_size = size, threshold = 5, epochs = 2000)
+        train(lr = lr, batch_size = size, threshold = 5, epochs = 1500)

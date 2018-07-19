@@ -115,7 +115,7 @@ def train(lr, batch_size, threshold, epochs):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        sample, label = process_data('data/train.h5')
+        sample, label = process_data('data/train2.h5')
         test_samples, test_labels = process_data('datasets/test.h5')
 
         graph_cost = []
@@ -197,9 +197,9 @@ def train(lr, batch_size, threshold, epochs):
 
         
 ######## RUN ########
-lrs = [.00005]
-sizes = [250]
+lrs = [.0001]
+sizes = [150]
 
 for lr in lrs: 
     for size in sizes:
-        train(lr = lr, batch_size = size, threshold = 5, epochs = 2000)
+        train(lr = lr, batch_size = size, threshold = 5, epochs = 500)
