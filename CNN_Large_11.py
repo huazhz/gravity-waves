@@ -10,7 +10,7 @@ x = tf.placeholder(tf.float32, shape = [None, 15000])
 y = tf.placeholder(tf.float32, shape = [None, 3])
 
 #Reshape input
-inp = tf.reshape(x, [-1, 15000, 1, 1])
+inp = tf.reshape(x, [-1, 7500, 1, 1])
 
 #Convolutional layer 1,2
 w_conv1 = weight('w_conv1', [80, 1, 1, 64])
@@ -76,10 +76,10 @@ conv9 = maxPool(conv9, 4)
 print(conv9.shape)
 
 #Flatten
-flat = tf.reshape(conv9, [-1, 6 * 256])
+flat = tf.reshape(conv9, [-1, 3 * 256])
 
 #Fully connected layer
-w_fc = weight('w_fc', [6 * 256, 20])
+w_fc = weight('w_fc', [3 * 256, 20])
 b_fc = bias('b_fc', [20])
 fc = tf.nn.relu(tf.matmul(flat, w_fc) + b_fc)
 #fc = tf.nn.dropout(fc, .9)

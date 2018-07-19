@@ -20,18 +20,18 @@ def process_data(filename):
                 data = np.array(f[key])
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
-                #data = data[-15000:]
+                #data = data[-7500:]
 		
 		#interpolate
-		new_length = 135000
-		old_indices = np.arange(0,len(data))
-		new_indices = np.linspace(0,len(data)-1,new_length)
-		spl = UnivariateSpline(old_indices,data,k=3,s=0)
-		new_array = spl(new_indices)
+		#new_length = 135000
+		#old_indices = np.arange(0,len(data))
+		#new_indices = np.linspace(0,len(data)-1,new_length)
+		#spl = UnivariateSpline(old_indices,data,k=3,s=0)
+		#new_array = spl(new_indices)
 		
 		#sample
-		data = decimate(new_array, 9, ftype = 'iir')
-		data = data.astype(np.float)
+		#data = decimate(new_array, 9, ftype = 'iir')
+		#data = data.astype(np.float)
 
                 #subtract mean, normalize amplitude
                 mean = np.mean(data)
