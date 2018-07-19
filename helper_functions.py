@@ -2,48 +2,38 @@ import numpy as np
 import random
 import h5py as h5
 import tensorflow as tf
-from scipy.interpolate import UnivariateSpline
-from scipy.signal import decimate
+import string
 
 #np.set_printoptions(threshold=np.nan)
 
 ######## DATA PREPROCESSING ########
-def process_data(filename):
-        f = h5.File(filename)
-        dset = []
-        q = []
-        s1z = []
-        s2z = []
+def process_data(directory):
 
-        for key in f.keys():
-                #format and truncate the wave
-                data = np.array(f[key])
-                data = np.reshape(data, (1, -1))
-                data = np.squeeze(data)
-                data = data[-7500:]
-		
-		#interpolate
-		#new_length = 135000
-		#old_indices = np.arange(0,len(data))
-		#new_indices = np.linspace(0,len(data)-1,new_length)
-		#spl = UnivariateSpline(old_indices,data,k=3,s=0)
-		#new_array = spl(new_indices)
-		
-		#sample
-		#data = decimate(new_array, 9, ftype = 'iir')
-		#data = data.astype(np.float)
+    dset = []
+    q = []
+    s1z = []
+    s2z = []
 
-                #subtract mean, normalize amplitude
-                mean = np.mean(data)
-                data = data - mean
-                peak = np.amax(np.abs(data))
-                data = data/peak
-                dset.append(data)
+    for filename in os.listdir(directory):
+        if filename.endswith(".dat"):
 
-                #extract each BBH parameter from the key name
-                q.append(float(key[2:6]))
-                s1z.append(float(key[11:15]))
-                s2z.append(float(key[-8:-4]))
+            #format and truncate the wave
+            data = np.loadtxt(filename)
+            data = np.reshape(data, (1, -1))
+            data = np.squeeze(data)
+            data = data[-7500:]
+    
+            #subtract mean, normalize amplitude
+            mean = np.mean(data)
+            data = data - mean
+            peak = np.amax(np.abs(data))
+            data = data/peak
+            dset.append(data)
+
+            #extract each BBH parameter from the file name
+            q.append(float(filename[2:6]))
+            s1z.append(float(filename[11:15]))
+            s2z.append(float(filename[-8:-4]))
 
         #convert each list to a numpy array
         dset = np.array(dset)
@@ -68,7 +58,7 @@ def weight(name, shape):
 
 def bias(name, shape):
         #return tf.Variable(tf.random_normal(shape), name=name)
-	return tf.get_variable(name, shape=shape, initializer = tf.constant_initializer(.1))
+    return tf.get_variable(name, shape=shape, initializer = tf.constant_initializer(.1))
 
 def conv(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding = 'SAME')
