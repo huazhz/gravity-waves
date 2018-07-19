@@ -14,10 +14,11 @@ for q in arange(2, 3, 1):
   s1y=0.
   s2x=0.
   s2y=0.
-  s1z=-0.6
-  #s2z= 0.9
+  s1z=0.8
+  s2z= 0.32
+  #q_2.00_s1z_0.80_s2z_0.32_f25.dat
 
-  for s2z in arange(.5, .98, .02):
+  for s2z in arange(.32, .34, .02):
       m1, m2 = mtotal_eta_to_mass1_mass2(M, eta)
 
       hp, hc = get_td_waveform(approximant='SEOBNRv3', mass1=m1, mass2=m2, spin1x=s1x, spin1y=s1y, spin1z=s1z, spin2x=s2x, spin2y=s2y, spin2z=s2z, f_lower=25., delta_t=1./8192.)
