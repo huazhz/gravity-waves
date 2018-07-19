@@ -20,7 +20,7 @@ def process_data(filename):
                 data = np.array(f[key])
                 data = np.reshape(data, (1, -1))
                 data = np.squeeze(data)
-                #data = data[-7500:]
+                data = data[-7500:]
 		
 		#interpolate
 		#new_length = 135000
