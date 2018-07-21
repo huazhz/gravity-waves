@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -l walltime=4:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -N gen_dataset
+#PBS -q secondary
+#PBS -M arnavmd2@illinois.edu
+#PBS -m be
+#PBS -o out2.txt
+#PNS -e error2.txt
+cd $PBS_O_WORKDIR
+
+source /projects/ncsa/grav/sibow2/virtualenvs/pycbc/bin/activate
+python positive4.py
+

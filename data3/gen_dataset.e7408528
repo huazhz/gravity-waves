@@ -1,0 +1,26 @@
+----------------------------------------
+Begin Torque Prologue (Sat Jul 21 12:17:55 2018)
+Job ID:           7408528.cc-mgmt1.campuscluster.illinois.edu
+Username:         arnavmd2
+Group:            ncsa
+Job Name:         gen_dataset
+Limits:           walltime=04:00:00,nodes=1:ppn=1,neednodes=1:ppn=1
+Job Queue:        secondary
+Account:          ncsa
+Nodes:            golub182
+End Torque Prologue
+----------------------------------------
+----------------------------------------
+Begin Torque Epilogue (Sat Jul 21 13:36:08 2018)
+Job ID:           7408528.cc-mgmt1.campuscluster.illinois.edu
+Username:         arnavmd2
+Group:            ncsa
+Job Name:         gen_dataset
+Session:          6666
+Limits:           walltime=04:00:00,nodes=1:ppn=1,neednodes=1:ppn=1
+Resources:        cput=01:17:46,vmem=1418656kb,walltime=01:18:13,mem=294064kb,energy_used=0
+Job Queue:        secondary
+Account:          ncsa
+Nodes:            golub182
+End Torque Epilogue
+----------------------------------------
