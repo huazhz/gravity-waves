@@ -1,2 +1,2 @@
 # gravity-waves
-Contains various CNN architectures that predict the spin of a BBH from simulated gravitational waves
+Contains datasets and raw data
